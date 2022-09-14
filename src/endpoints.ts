@@ -12,11 +12,22 @@ const router = express.Router()
 router.route("/test").post(async (req, res) => {
   console.log(req.body)
   const response = await twilioClient.messages.create({ ...req.body })
+
+  const task = new Task({
+    description: response.body,
+    from: response.to,
+  })
+  task.save()
   res.status(200).json(response)
 })
 
+router.route("/tasks").get(async (req, res) => {
+  const tasks = await Task.find()
+  res.status(200).json(tasks)
+})
+
 router
-  .use(twilio.webhook())
+  .use("/task-webhook", twilio.webhook())
   .route("/task-webhook")
   .post(async (req, res) => {
     console.log("Webhook Request", req.body)
